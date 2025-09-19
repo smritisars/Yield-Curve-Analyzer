@@ -1,4 +1,4 @@
-name: Build and Test Live Treasury Yield Curve Analyzer
+name: Build and Test Yield Curve Analyzer
 
 on:
   push:
@@ -25,19 +25,19 @@ jobs:
         cmake: true
         make: true
 
-    - name: Configure CMake for live build
-      run: cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DCMAKE_PROJECT_NAME=Yield-Curve-Analyzer
+    - name: Configure CMake
+      run: cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
 
-    - name: Build live analyzer
+    - name: Build
       run: cmake --build build --config ${{ matrix.build_type }}
 
-    - name: Run tests
+    - name: Test
       working-directory: build
       run: ctest -C ${{ matrix.build_type }}
 
-    - name: Upload live build artifacts
+    - name: Upload artifacts
       if: matrix.os == 'ubuntu-latest' && matrix.build_type == 'Release'
       uses: actions/upload-artifact@v3
       with:
-        name: yield-analyzer-live-linux
-        path: build/yield_analyzer_live
+        name: yield-analyzer-linux
+        path: build/yield_analyzer
