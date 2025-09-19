@@ -1,0 +1,134 @@
+# Enhanced Makefile for Live US Treasury Yield Curve Analyzer
+# Federal Reserve H.15 Data Integration
+
+CXX = g++
+CXXFLAGS = -std=c++17 -Wall -Wextra -O2 -I.
+DEBUG_FLAGS = -g -DDEBUG -DLIVE_DEBUG
+TARGET_LIVE = yield_analyzer_live
+TARGET_LEGACY = yield_analyzer
+SOURCES_LIVE = main_live.cpp
+SOURCES_LEGACY = main.cpp
+HEADERS_LIVE = YieldCurveLive.h
+HEADERS_LEGACY = YieldCurve.h
+
+# Default target - build live analyzer
+all: $(TARGET_LIVE)
+
+# Live analyzer with Federal Reserve data
+$(TARGET_LIVE): $(SOURCES_LIVE) $(HEADERS_LIVE)
+	@echo "🏦 Building Live Treasury Yield Analyzer..."
+	@echo "📊 Federal Reserve H.15 Data Integration"
+	$(CXX) $(CXXFLAGS) -o $(TARGET_LIVE) $(SOURCES_LIVE)
+	@echo "✅ Build complete: $(TARGET_LIVE)"
+
+# Legacy analyzer (for comparison)
+$(TARGET_LEGACY): $(SOURCES_LEGACY) $(HEADERS_LEGACY)
+	@echo "📊 Building Legacy Analyzer..."
+	$(CXX) $(CXXFLAGS) -o $(TARGET_LEGACY) $(SOURCES_LEGACY)
+
+# Both analyzers
+both: $(TARGET_LIVE) $(TARGET_LEGACY)
+
+# Run live analysis with Federal Reserve data
+live: $(TARGET_LIVE)
+	@echo "🚀 Running Live Treasury Analysis..."
+	@echo "📅 Using Federal Reserve H.15 data"
+	./$(TARGET_LIVE) treasury_yields_live.csv
+
+# Run quick market summary
+summary: $(TARGET_LIVE)  
+	@echo "📊 Quick Market Summary"
+	echo "7" | ./$(TARGET_LIVE) treasury_yields_live.csv
+
+# Export dashboard data
+dashboard: $(TARGET_LIVE)
+	@echo "🌐 Exporting Dashboard Data..."
+	echo "5" | ./$(TARGET_LIVE) treasury_yields_live.csv
+	@echo "✅ Dashboard data ready: live_yield_curve_data.json"
+
+# Full analysis with CSV export
+analysis: $(TARGET_LIVE)
+	@echo "📋 Running Full Analysis..."
+	echo "6" | ./$(TARGET_LIVE) treasury_yields_live.csv
+	@echo "✅ Analysis complete: live_yield_analysis.csv"
+
+# Debug build
+debug: CXXFLAGS += $(DEBUG_FLAGS)
+debug: $(TARGET_LIVE)
+	@echo "🔧 Debug build completed"
+
+# Release build with optimizations
+release: CXXFLAGS += -O3 -march=native -DNDEBUG
+release: $(TARGET_LIVE)
+	@echo "🚀 Release build completed"
+
+# Clean build artifacts and generated files
+clean:
+	@echo "🧹 Cleaning build artifacts..."
+	rm -f $(TARGET_LIVE) $(TARGET_LEGACY)
+	rm -f *.o *.obj
+	rm -f live_yield_curve_data.json live_yield_analysis.csv
+	@echo "✅ Clean completed"
+
+# Install to system (requires sudo)
+install: $(TARGET_LIVE)
+	@echo "📦 Installing Live Treasury Analyzer..."
+	cp $(TARGET_LIVE) /usr/local/bin/
+	mkdir -p /usr/local/share/doc/live-treasury-analyzer
+	cp README_LIVE.md /usr/local/share/doc/live-treasury-analyzer/ 2>/dev/null || true
+	mkdir -p /usr/local/share/live-treasury-analyzer/data
+	cp treasury_yields_live.csv /usr/local/share/live-treasury-analyzer/data/
+	cp maturity_mapping_live.json /usr/local/share/live-treasury-analyzer/data/
+	@echo "✅ Installation complete"
+
+# Validate data files
+validate:
+	@echo "🔍 Validating Federal Reserve data..."
+	@test -f treasury_yields_live.csv || (echo "❌ Missing: treasury_yields_live.csv" && exit 1)
+	@test -f maturity_mapping_live.json || (echo "❌ Missing: maturity_mapping_live.json" && exit 1)
+	@head -1 treasury_yields_live.csv | grep -q "Date" || (echo "❌ Invalid CSV header" && exit 1)
+	@echo "✅ Data validation passed"
+
+# Performance benchmark
+benchmark: $(TARGET_LIVE)
+	@echo "⚡ Running performance benchmark..."
+	@time ./$(TARGET_LIVE) treasury_yields_live.csv <<< "1"
+
+# Memory check (requires valgrind)
+memcheck: debug
+	@echo "🔍 Memory leak check..."
+	valgrind --leak-check=full ./$(TARGET_LIVE) treasury_yields_live.csv <<< "8" 2>/dev/null || echo "Install valgrind for memory checking"
+
+# Create distribution package
+package: clean release
+	@echo "📦 Creating distribution package..."
+	tar -czf live-treasury-analyzer.tar.gz \
+		$(TARGET_LIVE) \
+		README_LIVE.md \
+		CMakeLists_LIVE.txt \
+		Makefile \
+		$(HEADERS_LIVE) \
+		$(SOURCES_LIVE) \
+		treasury_yields_live.csv \
+		maturity_mapping_live.json
+	@echo "✅ Package created: live-treasury-analyzer.tar.gz"
+
+# Show project info
+info:
+	@echo "🏦 Live US Treasury Yield Curve Analyzer"
+	@echo "📊 Federal Reserve H.15 Selected Interest Rates"
+	@echo "📅 Data Date: September 17, 2025" 
+	@echo "🔗 Source: https://www.federalreserve.gov/releases/h15/"
+	@echo ""
+	@echo "📋 Available targets:"
+	@echo "  make live      - Build and run with Federal Reserve data"
+	@echo "  make summary   - Quick market conditions summary"
+	@echo "  make dashboard - Export JSON for web dashboard"
+	@echo "  make analysis  - Full analysis with CSV export"
+	@echo "  make clean     - Clean all build artifacts"
+	@echo "  make validate  - Validate Federal Reserve data files"
+
+# Help target
+help: info
+
+.PHONY: all live summary dashboard analysis clean install validate benchmark memcheck package info help debug release both
