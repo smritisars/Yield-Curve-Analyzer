@@ -1,4 +1,4 @@
-name: Build and Test Yield Curve Analyzer
+name: Build and Test Live Treasury Yield Curve Analyzer
 
 on:
   push:
@@ -29,7 +29,7 @@ jobs:
       run: cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
 
     - name: Build
-      run: cmake --build build --config ${{ matrix.build_type }}
+      run: cmake --build build --config ${{ matrix.build_type }} --target yield_analyzer_live
 
     - name: Test
       working-directory: build
@@ -39,5 +39,5 @@ jobs:
       if: matrix.os == 'ubuntu-latest' && matrix.build_type == 'Release'
       uses: actions/upload-artifact@v3
       with:
-        name: yield-analyzer-linux
-        path: build/yield_analyzer
+        name: yield-analyzer-live-linux
+        path: build/yield_analyzer_live
