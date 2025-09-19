@@ -1,0 +1,106 @@
+cmake_minimum_required(VERSION 3.10)
+
+# Project information
+project(LiveTreasuryYieldAnalyzer
+    VERSION 2.0
+    DESCRIPTION "Live US Treasury Yield Curve Analysis with Federal Reserve H.15 Data"
+    LANGUAGES CXX)
+
+# C++ Standard
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# Compiler flags for professional build
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wall -Wextra -O3 -march=native")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -Wextra -g -DDEBUG")
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /W3 /O2")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /W3 /Od /Zi")
+endif()
+
+# Include directories
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+
+# Source files
+set(LIVE_SOURCES
+    main_live.cpp
+)
+
+set(LIVE_HEADERS  
+    YieldCurveLive.h
+)
+
+# Main executable for live analysis
+add_executable(yield_analyzer_live ${LIVE_SOURCES} ${LIVE_HEADERS})
+
+# Legacy executable (for comparison)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/main.cpp")
+    add_executable(yield_analyzer main.cpp YieldCurve.h)
+endif()
+
+# Installation rules
+install(TARGETS yield_analyzer_live
+    RUNTIME DESTINATION bin)
+
+install(FILES README_LIVE.md
+    DESTINATION share/doc/live-treasury-analyzer)
+
+install(FILES treasury_yields_live.csv maturity_mapping_live.json
+    DESTINATION share/data)
+
+# Testing
+enable_testing()
+
+# Basic functionality test
+add_test(NAME live_basic_test
+    COMMAND yield_analyzer_live
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+
+# Data validation test  
+add_test(NAME live_data_test
+    COMMAND test -f treasury_yields_live.csv
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+
+# Custom targets for live data analysis
+add_custom_target(run_live_analysis
+    COMMAND yield_analyzer_live treasury_yields_live.csv
+    DEPENDS yield_analyzer_live
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    COMMENT "Running live Treasury yield curve analysis with Federal Reserve H.15 data"
+)
+
+add_custom_target(export_dashboard_data
+    COMMAND yield_analyzer_live treasury_yields_live.csv && echo "5" | yield_analyzer_live treasury_yields_live.csv
+    DEPENDS yield_analyzer_live  
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    COMMENT "Exporting JSON data for web dashboard"
+)
+
+add_custom_target(clean_live_data
+    COMMAND ${CMAKE_COMMAND} -E remove -f 
+        live_yield_curve_data.json 
+        live_yield_analysis.csv
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    COMMENT "Cleaning generated live analysis files"
+)
+
+# Package creation
+set(CPACK_PACKAGE_NAME "LiveTreasuryYieldAnalyzer")
+set(CPACK_PACKAGE_VERSION_MAJOR 2)
+set(CPACK_PACKAGE_VERSION_MINOR 0)
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Professional Treasury Yield Curve Analysis with Federal Reserve Data")
+set(CPACK_PACKAGE_CONTACT "opensource@treasuryanalyzer.com")
+include(CPack)
+
+# Print configuration summary
+message(STATUS "")
+message(STATUS "=== Live Treasury Yield Analyzer Configuration ===")
+message(STATUS "🏦 Project: ${PROJECT_NAME} v${PROJECT_VERSION}")
+message(STATUS "📊 Description: ${PROJECT_DESCRIPTION}")
+message(STATUS "🔧 Build type: ${CMAKE_BUILD_TYPE}")
+message(STATUS "📋 C++ standard: ${CMAKE_CXX_STANDARD}")
+message(STATUS "🖥️  Compiler: ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")
+message(STATUS "📂 Install prefix: ${CMAKE_INSTALL_PREFIX}")
+message(STATUS "🏛️  Data source: Federal Reserve H.15 Selected Interest Rates")
+message(STATUS "")
