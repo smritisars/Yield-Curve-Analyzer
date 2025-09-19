@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live US Treasury Yield Curve Dashboard - Federal Reserve H.15</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏛️</text></svg>">
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Federal Reserve Header -->
+        <header class="dashboard-header">
+            <div class="header-content">
+                <div class="fed-branding">
+                    <div class="fed-logo">
+                        <svg width="32" height="32" viewBox="0 0 100 100" fill="none">
+                            <circle cx="50" cy="50" r="45" stroke="#003366" stroke-width="3" fill="#003366"/>
+                            <text x="50" y="35" text-anchor="middle" fill="white" font-family="serif" font-size="12" font-weight="bold">FED</text>
+                            <text x="50" y="65" text-anchor="middle" fill="white" font-family="serif" font-size="8">H.15</text>
+                        </svg>
+                    </div>
+                    <div class="fed-title">
+                        <h1>Live US Treasury Yield Curve Dashboard</h1>
+                        <p class="fed-subtitle">Federal Reserve H.15 Selected Interest Rates</p>
+                    </div>
+                </div>
+                <div class="header-meta">
+                    <div class="live-indicator">
+                        <span class="live-badge">LIVE</span>
+                        <span class="market-status" id="marketStatus">Market Open</span>
+                    </div>
+                    <div class="date-info">
+                        <span class="current-date" id="currentDate">September 17, 2025</span>
+                        <span class="last-update">Last Updated: <span id="lastUpdate">15:30 EST</span></span>
+                    </div>
+                    <button class="btn btn--primary btn--sm" id="refreshBtn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="23 4 23 10 17 10"></polyline>
+                            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                        </svg>
+                        Refresh Data
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Data Source Attribution -->
+        <div class="data-source-banner">
+            <div class="container">
+                <p><strong>Official Data Source:</strong> Federal Reserve Board of Governors • 
+                <a href="https://www.federalreserve.gov/releases/h15/" target="_blank">H.15 Selected Interest Rates</a> • 
+                Updated Daily at 4:15 PM ET</p>
+            </div>
+        </div>
+
+        <!-- Main Dashboard Grid -->
+        <div class="dashboard-grid container">
+            <!-- Main Chart Section -->
+            <section class="chart-section">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>US Treasury Yield Curve</h2>
+                        <div class="chart-controls">
+                            <div class="curve-shape-indicator">
+                                <span class="shape-label">Curve Shape:</span>
+                                <span class="status status--info" id="curveShapeIndicator">Humped/Complex</span>
+                            </div>
+                            <button class="btn btn--outline btn--sm" id="exportChart">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="7 10 12 15 17 10"></polyline>
+                                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                                </svg>
+                                Export PNG
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card__body">
+                        <div class="chart-container" style="position: relative; height: 450px;">
+                            <canvas id="yieldCurveChart"></canvas>
+                        </div>
+                        <div class="chart-legend">
+                            <span class="legend-item">
+                                <span class="legend-color" style="background-color: #003366;"></span>
+                                Current Yields (September 17, 2025)
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Key Spreads Panel -->
+            <aside class="spreads-panel">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Critical Spreads</h3>
+                        <span class="spread-units">Basis Points</span>
+                    </div>
+                    <div class="card__body">
+                        <div class="metric-item">
+                            <span class="metric-label">2s10s Spread</span>
+                            <span class="metric-value positive" id="spread2s10s">+54 bps</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">3m10y Spread</span>
+                            <span class="metric-value positive" id="spread3m10y">+4 bps</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">5s30s Spread</span>
+                            <span class="metric-value positive" id="spread5s30s">+104 bps</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">1m3m Spread</span>
+                            <span class="metric-value negative" id="spread1m3m">-15 bps</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Economic Indicators -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Economic Indicators</h3>
+                    </div>
+                    <div class="card__body">
+                        <div class="indicator-item">
+                            <span class="indicator-label">Recession Probability:</span>
+                            <span class="status status--success" id="recessionIndicator">Low</span>
+                        </div>
+                        <div class="indicator-item">
+                            <span class="indicator-label">Term Premium:</span>
+                            <span class="indicator-value" id="termPremium">60 bps</span>
+                        </div>
+                        <div class="indicator-item">
+                            <span class="indicator-label">Curve Steepness:</span>
+                            <span class="status status--info" id="curveState">Normal</span>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Forward Rates Panel -->
+            <section class="forward-rates-panel">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Forward Rates</h3>
+                        <span class="subtitle">Market Expectations</span>
+                    </div>
+                    <div class="card__body">
+                        <div class="forward-grid">
+                            <div class="forward-item">
+                                <span class="forward-label">1y1y Forward</span>
+                                <span class="forward-value" id="forward1y1y">3.44%</span>
+                                <span class="forward-desc">1-year rate, 1-year forward</span>
+                            </div>
+                            <div class="forward-item">
+                                <span class="forward-label">2y1y Forward</span>
+                                <span class="forward-value" id="forward2y1y">3.50%</span>
+                                <span class="forward-desc">1-year rate, 2-years forward</span>
+                            </div>
+                            <div class="forward-item">
+                                <span class="forward-label">5y5y Forward</span>
+                                <span class="forward-value" id="forward5y5y">4.28%</span>
+                                <span class="forward-desc">5-year rate, 5-years forward</span>
+                            </div>
+                            <div class="forward-item">
+                                <span class="forward-label">10y10y Forward</span>
+                                <span class="forward-value" id="forward10y10y">5.02%</span>
+                                <span class="forward-desc">10-year rate, 10-years forward</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Calculation Tools -->
+            <section class="calculator-panel">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Custom Spread Calculator</h3>
+                    </div>
+                    <div class="card__body">
+                        <div class="calculator-row">
+                            <select class="form-control" id="calc1">
+                                <option value="0.083">1MO</option>
+                                <option value="0.25">3MO</option>
+                                <option value="0.5">6MO</option>
+                                <option value="1">1Y</option>
+                                <option value="2">2Y</option>
+                                <option value="3">3Y</option>
+                                <option value="5">5Y</option>
+                                <option value="7">7Y</option>
+                                <option value="10" selected>10Y</option>
+                                <option value="20">20Y</option>
+                                <option value="30">30Y</option>
+                            </select>
+                            <span class="minus-sign">−</span>
+                            <select class="form-control" id="calc2">
+                                <option value="0.083">1MO</option>
+                                <option value="0.25">3MO</option>
+                                <option value="0.5">6MO</option>
+                                <option value="1">1Y</option>
+                                <option value="2" selected>2Y</option>
+                                <option value="3">3Y</option>
+                                <option value="5">5Y</option>
+                                <option value="7">7Y</option>
+                                <option value="10">10Y</option>
+                                <option value="20">20Y</option>
+                                <option value="30">30Y</option>
+                            </select>
+                            <button class="btn btn--primary btn--sm" id="calculateSpread">Calculate</button>
+                        </div>
+                        <div class="calc-result">
+                            <span class="result-label">Custom Spread:</span>
+                            <strong class="result-value" id="customSpread">+54 bps</strong>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Risk Metrics Table -->
+            <section class="risk-metrics-section">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Duration & Risk Metrics</h3>
+                        <button class="btn btn--outline btn--sm" id="exportData">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                                <line x1="16" y1="13" x2="8" y2="13"></line>
+                                <line x1="16" y1="17" x2="8" y2="17"></line>
+                                <polyline points="10 9 9 9 8 9"></polyline>
+                            </svg>
+                            Export CSV
+                        </button>
+                    </div>
+                    <div class="card__body">
+                        <div class="table-container">
+                            <table class="yield-table" id="yieldTable">
+                                <thead>
+                                    <tr>
+                                        <th>Maturity</th>
+                                        <th>Yield (%)</th>
+                                        <th>Duration</th>
+                                        <th>DV01</th>
+                                        <th>Risk Level</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="yieldTableBody">
+                                    <!-- Dynamic content populated by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Footer with Federal Reserve Links -->
+        <footer class="dashboard-footer">
+            <div class="container">
+                <div class="footer-content">
+                    <div class="footer-links">
+                        <a href="https://www.federalreserve.gov/releases/h15/" target="_blank">Federal Reserve H.15 Data</a>
+                        <a href="https://www.federalreserve.gov/monetarypolicy.htm" target="_blank">Monetary Policy</a>
+                        <a href="https://www.federalreserve.gov/econres.htm" target="_blank">Economic Research</a>
+                    </div>
+                    <div class="footer-disclaimer">
+                        <p><small>Data provided by the Federal Reserve Board of Governors. This dashboard is for educational and research purposes.</small></p>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
