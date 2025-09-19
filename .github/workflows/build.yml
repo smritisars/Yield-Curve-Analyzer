@@ -37,7 +37,7 @@ jobs:
 
     - name: Upload artifacts
       if: matrix.os == 'ubuntu-latest' && matrix.build_type == 'Release'
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: yield-analyzer-live-linux
         path: build/yield_analyzer_live
