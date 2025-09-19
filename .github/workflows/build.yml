@@ -26,7 +26,7 @@ jobs:
         make: true
 
     - name: Configure CMake
-      run: cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+      run: cmake -B build -S . -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DCMAKE_TOOLCHAIN_FILE=CMakeLists_LIVE.txt
 
     - name: Build
       run: cmake --build build --config ${{ matrix.build_type }} --target yield_analyzer_live
