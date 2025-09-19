@@ -6,6 +6,13 @@ A comprehensive C++ application for analyzing **real-time US Treasury yield curv
 
 **[View Live Dashboard](https://smritisars.github.io/Yield-Curve-Analyzer/)**
 
+# Inspired by Yield curve analysis tools of
+ - Bloomberg Terminal
+ - Thomson Reuters Eikon (Refinitiv)
+ - FactSet
+ - Moody’s Analytics
+ - S&P Capital IQ
+
 ## Live Data Features
 
 ### Real Federal Reserve Data
