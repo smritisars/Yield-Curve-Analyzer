@@ -1,0 +1,43 @@
+name: Build and Test Live Treasury Yield Curve Analyzer
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        build_type: [Release, Debug]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Setup C++ environment
+      uses: aminya/setup-cpp@v1
+      with:
+        compiler: gcc
+        cmake: true
+        make: true
+
+    - name: Configure CMake for live build
+      run: cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DCMAKE_PROJECT_NAME=Yield-Curve-Analyzer
+
+    - name: Build live analyzer
+      run: cmake --build build --config ${{ matrix.build_type }}
+
+    - name: Run tests
+      working-directory: build
+      run: ctest -C ${{ matrix.build_type }}
+
+    - name: Upload live build artifacts
+      if: matrix.os == 'ubuntu-latest' && matrix.build_type == 'Release'
+      uses: actions/upload-artifact@v3
+      with:
+        name: yield-analyzer-live-linux
+        path: build/yield_analyzer_live
