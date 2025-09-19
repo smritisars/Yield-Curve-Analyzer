@@ -90,63 +90,97 @@ public:
     
     // Load yield data from CSV file with expanded Treasury maturities
     bool loadFromCSV(const std::string& filename, const std::string& date_filter = "") {
-        std::ifstream file(filename);
-        if (!file.is_open()) {
-            std::cerr << "Error: Could not open file " << filename << std::endl;
-            return false;
+    std::ifstream file(filename);
+    if (!file.is_open()) {
+        std::cerr << "Error: Could not open file " << filename << std::endl;
+        return false; // Stop processing if file can't be opened
+    }
+
+    std::string line;
+    if (!std::getline(file, line)) {
+        std::cerr << "Error: CSV file " << filename << " is empty or unreadable." << std::endl;
+        return false; // No header or empty file
+    }
+
+    bool found_date = false;
+    while (std::getline(file, line)) {
+        if (line.empty()) {
+            std::cerr << "Warning: Skipping empty line in CSV file." << std::endl;
+            continue; // Skip empty lines gracefully
         }
-        
-        std::string line;
-        std::getline(file, line); // Skip header
-        
-        bool found_date = false;
-        while (std::getline(file, line)) {
-            std::istringstream iss(line);
-            std::string token;
-            std::vector<std::string> tokens;
-            
-            while (std::getline(iss, token, ',')) {
-                tokens.push_back(token);
-            }
-            
-            if (tokens.size() >= 12) { // Updated for all 11 maturities + date
-                std::string date = tokens[0];
-                
-                // If no date filter or date matches
-                if (date_filter.empty() || date.find(date_filter) != std::string::npos) {
-                    curve_date = date;
-                    yield_points.clear();
-                    
-                    // Add yield points for each maturity (in CSV order)
-                    std::vector<std::string> maturity_order = {
-                        "1MO", "3MO", "6MO", "1Y", "2Y", "3Y", "5Y", "7Y", "10Y", "20Y", "30Y"
-                    };
-                    
-                    for (size_t i = 0; i < maturity_order.size() && i + 1 < tokens.size(); i++) {
-                        std::string mat_label = maturity_order[i];
-                        try {
-                            double yield_val = std::stod(tokens[i + 1]);
-                            double maturity_years = maturity_map.at(mat_label);
-                            yield_points.emplace_back(maturity_years, yield_val, mat_label);
-                        } catch (const std::invalid_argument& e) {
-                            // Skip invalid data points
-                            continue;
-                        }
-                    }
-                    found_date = true;
-                    if (!date_filter.empty()) break;
+        std::istringstream iss(line);
+        std::string token;
+        std::vector<std::string> tokens;
+
+        while (std::getline(iss, token, ',')) {
+            tokens.push_back(token);
+        }
+
+        if (tokens.size() < 12) {
+            std::cerr << "Warning: Skipping line with insufficient columns (expected 12): " << line << std::endl;
+            continue; // Skip malformed lines without enough columns
+        }
+
+        std::string date = tokens[0];
+
+        if (!date_filter.empty() && date.find(date_filter) == std::string::npos) {
+            continue; // Skip lines not matching date filter early
+        }
+
+        // Clear previous data before new date load
+        yield_points.clear();
+        curve_date = date;
+
+        std::vector<std::string> maturity_order = {
+            "1MO", "3MO", "6MO", "1Y", "2Y", "3Y", "5Y", "7Y", "10Y", "20Y", "30Y"
+        };
+
+        bool valid_data_found = false;
+        for (size_t i = 0; i < maturity_order.size() && i + 1 < tokens.size(); i++) {
+            std::string mat_label = maturity_order[i];
+
+            try {
+                if (tokens[i + 1].empty()) {
+                    std::cerr << "Warning: Missing yield value for " << mat_label << " on date " << date << std::endl;
+                    continue; // Skip missing yield values
                 }
+                double yield_val = std::stod(tokens[i + 1]);
+                double maturity_years = maturity_map.at(mat_label);
+                yield_points.emplace_back(maturity_years, yield_val, mat_label);
+                valid_data_found = true;
+            } catch (const std::invalid_argument&) {
+                std::cerr << "Warning: Invalid yield data '" << tokens[i + 1] << "' for " << mat_label 
+                          << " on date " << date << std::endl;
+                continue;
+            } catch (const std::out_of_range&) {
+                std::cerr << "Warning: Yield data out of range for " << mat_label << std::endl;
+                continue;
             }
         }
-        
+
+        if (valid_data_found) {
+            found_date = true;
+            if (!date_filter.empty()) break; // Stop if filtered date found and loaded
+        }
+    }
+
+    if (!found_date) {
+        std::cerr << "Warning: No valid data found in CSV for date filter '" << date_filter << "'." << std::endl;
+    }
+
+    if (!yield_points.empty()) {
         std::sort(yield_points.begin(), yield_points.end(), 
                   [](const YieldPoint& a, const YieldPoint& b) {
                       return a.maturity < b.maturity;
                   });
-        
-        file.close();
-        return found_date;
+    } else {
+        std::cerr << "Error: No yield points loaded. Please check the CSV file content." << std::endl;
     }
+
+    file.close();
+    return found_date;
+}
+
     
     // Get interpolated yield for any maturity using improved method
     double getYield(double maturity) const {
