@@ -1,10 +1,10 @@
 #  Live US Treasury Yield Curve Analysis System
 
+A comprehensive C++ application for analyzing **real-time US Treasury yield curves** using official **Federal Reserve H.15 Selected Interest Rate data**. This system provides professional-grade financial analysis with live data integration, advanced calculations, and interactive web dashboard.
+
 ## Live Web Dashboard
 
 **[View Live Dashboard](https://smritisars.github.io/Yield-Curve-Analyzer/)**
-
-A comprehensive C++ application for analyzing **real-time US Treasury yield curves** using official **Federal Reserve H.15 Selected Interest Rate data**. This system provides professional-grade financial analysis with live data integration, advanced calculations, and interactive web dashboard.
 
 ## Live Data Features
 
@@ -158,7 +158,7 @@ git push -u origin main
 
 ### GitHub Pages Dashboard
 1. Go to repository Settings → Pages
-2. Select main branch → /dashboard folder  
+2. Select main branch → /docs folder  
 3. Your live dashboard will be at: `https://yourusername.github.io/yield-curve-analyzer/`
 
 ## 🏛️ Data Source Attribution
